@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = 'OB-X-AE'
+rootProject.name = 'OB-Xf'
 include ':app'
 
 // When debugging, enable these lines (and change `implementation` section in build.gradle.

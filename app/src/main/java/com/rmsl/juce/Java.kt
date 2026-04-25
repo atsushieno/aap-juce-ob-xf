@@ -8,7 +8,7 @@ class Java
 {
     companion object {
         init {
-            System.loadLibrary("OB-X-AE_Standalone")
+            System.loadLibrary("OB-Xf_Standalone")
         }
         
         @JvmStatic

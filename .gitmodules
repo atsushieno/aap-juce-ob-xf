@@ -4,6 +4,6 @@
 [submodule "external/aap-juce"]
 	path = external/aap-juce
 	url = https://github.com/atsushieno/aap-juce
-[submodule "external/ob-x-ae"]
-	path = external/OB-X-AE
-	url = https://github.com/atsushieno/ob-x-ae
+[submodule "external/OB-Xf"]
+	path = external/OB-Xf
+	url = https://github.com/surge-synthesizer/OB-Xf

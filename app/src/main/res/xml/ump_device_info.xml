@@ -1,5 +1,5 @@
 <devices>
-    <device name="OB-X-AE" manufacturer="androidaudioplugin.org" product="OB-X-AE">
+    <device name="OB-Xf" manufacturer="androidaudioplugin.org" product="OB-Xf">
         <port name="port1" />
     </device>
 </devices>
