@@ -1,47 +1,112 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 2dcd560..be61082 100644
+index 748d42b..968d2da 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -137,3 +137,42 @@ endfunction()
- 
- apply_patch_if_needed(ob-x-ae.patch external/OB-Xx)
+@@ -123,6 +123,16 @@ else()
+     endif()
+ endif()
  
 +# begin AAP specifics -->
 +if (DEFINED AAP_DIR)
-+        find_package(androidaudioplugin REQUIRED CONFIG)
-+        include_directories(${AAP_DIR}/include)
-+        juce_add_modules(${AAP_JUCE_DIR}/aap-modules/aap_audio_processors)
-+
-+        set(APP_NAME ${BaseTargetName})
-+
-+        target_compile_definitions(${APP_NAME} PUBLIC
-+                JUCEAAP_HAVE_AUDIO_PLAYHEAD_NEW_POSITION_INFO=1
-+                JUCE_PUSH_NOTIFICATIONS=1
-+                JUCE_PUSH_NOTIFICATIONS_ACTIVITY="com/rmsl/juce/JuceActivity"
-+                JUCE_DONT_AUTO_OPEN_MIDI_DEVICES_ON_MOBILE=1
-+        )
-+
-+        if (ANDROID)
-+                target_include_directories(${APP_NAME} PRIVATE
-+                        "${ANDROID_NDK}/sources/android/cpufeatures"
-+                        "${OBOE_DIR}/include"
-+                )
-+
-+                # dependencies
-+                find_library(log "log")
-+                find_library(android "android")
-+                find_library(glesv2 "GLESv2")
-+                find_library(egl "EGL")
-+                set(cpufeatures_lib "cpufeatures")
-+                set(oboe_lib "oboe")
-+
-+        endif (ANDROID)
-+
-+        target_link_libraries(${APP_NAME}
-+                PRIVATE
-+                aap_audio_processors
-+        )
++    find_package(androidaudioplugin REQUIRED CONFIG)
++    include_directories(${AAP_DIR}/include)
++    juce_add_modules(${AAP_JUCE_DIR}/aap-modules/aap_audio_processors)
 +else()
-+        message("AAP_DIR not defined: skipping AAP build.")
++    message("AAP_DIR not defined: skipping AAP build.")
 +endif()
 +# <-- end AAP specifics
++
+ juce_add_plugin(OB-Xf
+     COMPANY_NAME "Surge Synth Team"
+     BUNDLE_ID "org.surge-synth-team.OB-Xf"
+@@ -234,7 +244,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+         -Wall
+         # -Wextra
+         # -Wpedantic
+-        -Werror
++        #-Werror
+         -Wno-language-extension-token
+         -Wno-macro-redefined
+     )
+@@ -286,3 +296,39 @@ if (UNIX AND NOT APPLE AND NOT OBXF_IS_IOS)
+     install(DIRECTORY "${CMAKE_SOURCE_DIR}/assets/installer/Surge Synth Team"
+             DESTINATION ${CMAKE_INSTALL_PREFIX}/share)
+ endif()
++
++# begin AAP specifics -->
++if (DEFINED AAP_DIR)
++    set(APP_NAME ${ADLAE_PLUGIN_NAME})
++
++    target_compile_definitions(OB-Xf PUBLIC
++            JUCEAAP_HAVE_AUDIO_PLAYHEAD_NEW_POSITION_INFO=1
++            JUCE_PUSH_NOTIFICATIONS=1
++            JUCE_PUSH_NOTIFICATIONS_ACTIVITY="com/rmsl/juce/JuceActivity"
++            JUCE_DONT_AUTO_OPEN_MIDI_DEVICES_ON_MOBILE=1
++    )
++
++    if (ANDROID)
++        target_include_directories(OB-Xf PRIVATE
++                "${ANDROID_NDK}/sources/android/cpufeatures"
++                "${OBOE_DIR}/include"
++        )
++
++        # dependencies
++        find_library(log "log")
++        find_library(android "android")
++        find_library(glesv2 "GLESv2")
++        find_library(egl "EGL")
++        find_package(androidaudioplugin CONFIG REQUIRED)
++        set(cpufeatures_lib "cpufeatures")
++        set(oboe_lib "oboe")
++
++    endif (ANDROID)
++
++    target_link_libraries(OB-Xf
++            PRIVATE
++            aap_audio_processors
++            androidaudioplugin::androidaudioplugin
++    )
++endif()
++# <-- end AAP specifics
+Submodule libs/sst/sst-plugininfra contains modified content
+diff --git a/libs/sst/sst-plugininfra/src/misc_linux.cpp b/libs/sst/sst-plugininfra/src/misc_linux.cpp
+index a9b5524..0cf5258 100644
+--- a/libs/sst/sst-plugininfra/src/misc_linux.cpp
++++ b/libs/sst/sst-plugininfra/src/misc_linux.cpp
+@@ -38,6 +38,9 @@ std::string toOSCase(const std::string &text) { return text; }
+ 
+ std::string stackTraceToString(int depth)
+ {
++#if ANDROID
++    return "";
++#else
+     void *callstack[128];
+     int i, frames = backtrace(callstack, 128);
+     char **strs = backtrace_symbols(callstack, frames);
+@@ -51,6 +54,7 @@ std::string stackTraceToString(int depth)
+     }
+     free(strs);
+     return oss.str();
++#endif
+ }
+ 
+ std::string getLastSystemError() { return std::string(strerror(errno)); }
+diff --git a/libs/sst/sst-plugininfra/src/paths_linux.cpp b/libs/sst/sst-plugininfra/src/paths_linux.cpp
+index 9e37e5e..c40b323 100644
+--- a/libs/sst/sst-plugininfra/src/paths_linux.cpp
++++ b/libs/sst/sst-plugininfra/src/paths_linux.cpp
+@@ -28,10 +28,14 @@ namespace paths
+ {
+ fs::path homePath()
+ {
++#if ANDROID
++    return fs::path{"/data/data/org.androidaudioplugin.ports.juce.ob-xf/files"};
++#else
+     const char *const path = std::getenv("HOME");
+     if (!path || !path[0])
+         throw std::runtime_error{"The environment variable HOME is unset or empty"};
+     return fs::path{path};
++#endif
+ }
+ 
+ fs::path sharedLibraryBinaryPath()
