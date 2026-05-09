@@ -68,7 +68,104 @@ index 748d42b..968d2da 100644
 +    )
 +endif()
 +# <-- end AAP specifics
-Submodule libs/sst/sst-plugininfra contains modified content
+diff --git a/src/PluginEditor.cpp b/src/PluginEditor.cpp
+index c81e40e..f827905 100644
+--- a/src/PluginEditor.cpp
++++ b/src/PluginEditor.cpp
+@@ -141,7 +141,7 @@ ObxfAudioProcessorEditor::ObxfAudioProcessorEditor(ObxfAudioProcessor &p)
+     idleTimer->startTimer(1000 / 30);
+     processor.uiState.editorAttached = true;
+ 
+-#if (defined(DEBUG) || defined(_DEBUG)) && !JUCE_IOS
++#if (defined(DEBUG) || defined(_DEBUG)) && !JUCE_IOS && !ANDROID
+     inspector = std::make_unique<melatonin::Inspector>(*this, false);
+     inspector->setVisible(false);
+ #endif
+@@ -1940,7 +1940,7 @@ void ObxfAudioProcessorEditor::finalizeThemeLoad(ObxfAudioProcessor &ownerFilter
+ 
+ ObxfAudioProcessorEditor::~ObxfAudioProcessorEditor()
+ {
+-#if (defined(DEBUG) || defined(_DEBUG)) && !JUCE_IOS
++#if (defined(DEBUG) || defined(_DEBUG)) && !JUCE_IOS && !ANDROID
+     if (inspector)
+         inspector.reset();
+ #endif
+@@ -2845,7 +2845,7 @@ void ObxfAudioProcessorEditor::createMenu()
+         menu->addSubMenu("Zoom", sizeMenu);
+     }
+ 
+-#if (defined(DEBUG) || defined(_DEBUG)) && !JUCE_IOS
++#if (defined(DEBUG) || defined(_DEBUG)) && !JUCE_IOS && !ANDROID
+     juce::PopupMenu debugMenu;
+ 
+     debugMenu.addSeparator();
+@@ -3068,7 +3068,7 @@ void ObxfAudioProcessorEditor::MenuActionCallback(int action)
+ #endif
+     }
+ 
+-#if (defined(DEBUG) || defined(_DEBUG)) && !JUCE_IOS
++#if (defined(DEBUG) || defined(_DEBUG)) && !JUCE_IOS && !ANDROID
+     // Open Melatonin inspector
+     if (action == MenuAction::Inspector)
+     {
+diff --git a/src/components/ScalingImageCache.cpp b/src/components/ScalingImageCache.cpp
+index f2048f5..07d5337 100644
+--- a/src/components/ScalingImageCache.cpp
++++ b/src/components/ScalingImageCache.cpp
+@@ -214,7 +214,8 @@ int ScalingImageCache::zoomLevelFor(const std::string &label, const int w, int /
+     if (cacheSizes.find(label) == cacheSizes.end())
+         return baseZoomLevel;
+ 
+-    double scale = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay()->scale;
++    auto *pd = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay();
++    double scale = pd ? pd->scale : 1.0;
+     // this gets the right scale assets but we dont' end up getting the right position on win
+     scale *= utils.getPluginAPIScale();
+     auto base = cacheSizes[label];
+diff --git a/src/gui/LookAndFeel.cpp b/src/gui/LookAndFeel.cpp
+index d3213f9..1bbfc39 100644
+--- a/src/gui/LookAndFeel.cpp
++++ b/src/gui/LookAndFeel.cpp
+@@ -32,6 +32,19 @@ juce::PopupMenu::Options LookAndFeel::defaultPopupMenuOptions()
+     return juce::PopupMenu::Options().withParentComponent(editor);
+ }
+ 
++juce::PopupMenu::Options LookAndFeel::getOptionsForComboBoxPopupMenu(juce::ComboBox &b,
++                                                                     juce::Label &l)
++{
++    // this is a huge hack to make sure our patch list menu draws fully on screen without being
++    // clipped it's ugly but I'm fine with it because we're not gonna have a ButtonList that has
++    // more entries than this
++    auto options = juce::LookAndFeel_V4::getOptionsForComboBoxPopupMenu(b, l)
++                       .withItemThatMustBeVisible(256 /* MAX_PROGRAMS*/);
++    if (editor)
++        options = options.withParentComponent(editor);
++    return options;
++}
++
+ juce::Font LookAndFeel::getPopupMenuFont()
+ {
+     auto f = LookAndFeel_V4::getPopupMenuFont();
+diff --git a/src/gui/LookAndFeel.h b/src/gui/LookAndFeel.h
+index 1c1ebec..857ae69 100644
+--- a/src/gui/LookAndFeel.h
++++ b/src/gui/LookAndFeel.h
+@@ -297,14 +297,7 @@ class LookAndFeel final : public juce::LookAndFeel_V4
+     }
+ 
+     juce::PopupMenu::Options getOptionsForComboBoxPopupMenu(juce::ComboBox &b,
+-                                                            juce::Label &l) override
+-    {
+-        // this is a huge hack to make sure our patch list menu draws fully on screen without being
+-        // clipped it's ugly but I'm fine with it because we're not gonna have a ButtonList that has
+-        // more entries than this
+-        return juce::LookAndFeel_V4::getOptionsForComboBoxPopupMenu(b, l).withItemThatMustBeVisible(
+-            256 /* MAX_PROGRAMS*/);
+-    }
++                                                            juce::Label &l) override;
+ 
+     juce::PopupMenu::Options defaultPopupMenuOptions();
+ 
 diff --git a/libs/sst/sst-plugininfra/src/misc_linux.cpp b/libs/sst/sst-plugininfra/src/misc_linux.cpp
 index a9b5524..0cf5258 100644
 --- a/libs/sst/sst-plugininfra/src/misc_linux.cpp
@@ -92,7 +189,7 @@ index a9b5524..0cf5258 100644
  
  std::string getLastSystemError() { return std::string(strerror(errno)); }
 diff --git a/libs/sst/sst-plugininfra/src/paths_linux.cpp b/libs/sst/sst-plugininfra/src/paths_linux.cpp
-index 9e37e5e..c40b323 100644
+index 9e37e5e..1dbb744 100644
 --- a/libs/sst/sst-plugininfra/src/paths_linux.cpp
 +++ b/libs/sst/sst-plugininfra/src/paths_linux.cpp
 @@ -28,10 +28,14 @@ namespace paths
