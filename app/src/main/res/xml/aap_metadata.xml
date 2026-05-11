@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <plugins xmlns="urn:org.androidaudioplugin.core">
-  <plugin name="OB-Xf" category="Instrument" author="Atsushi Eno"
-      developer="Atsushi Eno" unique-id="juceaap:ob-xf" library="libOB-Xf_Standalone.so"
+  <plugin name="OB-Xf AAP" category="Instrument" author="Surge Synth Team / AAP Porting Project"
+      developer="AAP Porting Project" unique-id="juceaap:ob-xf" library="libOB-Xf_Standalone.so"
       entrypoint="GetJuceAAPFactoryStandalone"
       gui:ui-view-factory="org.androidaudioplugin.juce.JuceAudioPluginViewFactory"
       xmlns:gui="urn://androidaudioplugin.org/extensions/gui">
