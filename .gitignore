@@ -7,4 +7,4 @@ dist
 app/src/main/res/drawable/ic_launcher.png
 app/src/main/assets
 .DS_Store
-
+.claude
