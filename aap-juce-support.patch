@@ -1,8 +1,19 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 748d42b..968d2da 100644
+index 748d42b..f88ded9 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -123,6 +123,16 @@ else()
+@@ -1,4 +1,9 @@
+-cmake_minimum_required(VERSION 3.15)
++cmake_minimum_required(VERSION 3.22)
++
++get_filename_component(app_source "${CMAKE_CURRENT_LIST_DIR}" REALPATH)
++add_subdirectory("${app_source}/../aap-juce" "${CMAKE_CURRENT_BINARY_DIR}/aap-juce" EXCLUDE_FROM_ALL)
++aap_juce_configure(JUCE_SOURCE_DIR libs/JUCE ADOPT_EXISTING_PATCHES)
++
+ 
+ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+@@ -123,6 +128,16 @@ else()
      endif()
  endif()
  
@@ -19,7 +30,7 @@ index 748d42b..968d2da 100644
  juce_add_plugin(OB-Xf
      COMPANY_NAME "Surge Synth Team"
      BUNDLE_ID "org.surge-synth-team.OB-Xf"
-@@ -234,7 +244,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+@@ -234,7 +249,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
          -Wall
          # -Wextra
          # -Wpedantic
@@ -28,7 +39,7 @@ index 748d42b..968d2da 100644
          -Wno-language-extension-token
          -Wno-macro-redefined
      )
-@@ -286,3 +296,39 @@ if (UNIX AND NOT APPLE AND NOT OBXF_IS_IOS)
+@@ -286,3 +301,39 @@ if (UNIX AND NOT APPLE AND NOT OBXF_IS_IOS)
      install(DIRECTORY "${CMAKE_SOURCE_DIR}/assets/installer/Surge Synth Team"
              DESTINATION ${CMAKE_INSTALL_PREFIX}/share)
  endif()
